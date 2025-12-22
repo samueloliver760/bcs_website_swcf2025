@@ -554,7 +554,7 @@
 
 <h2 style="text-align: center;  color: #0f2a4e; font-weight: bolder; margin-bottom: 30px;"><b>Performer List</b> </h2>
     <div class="performer-container">
-      <table id="performer_swcf" class="display">
+      <table id="swcf_performer" class="display">
           <thead>
               <tr>
                   <th>Competition Type</th>
@@ -3184,7 +3184,7 @@ a:hover::before {
 
 
             var isPhone = window.innerWidth < 700;
-            var table = new DataTable('#performer_swcf', {
+            var table = new DataTable('#swcf_performer', {
                 autoWidth: false,
                 ordering: true,
                 paging: true,
@@ -3237,7 +3237,7 @@ a:hover::before {
                 }],
             });
 
-            $('#performer_swcf tfoot th').each(function () {
+            $('#swcf_performer tfoot th').each(function () {
                 var title = $(this).text();
                 if (title != '') {
                     $(this).html('<input type="text" class="form-control" placeholder="Search ' + title + '" style="width: 100%;" />');
