@@ -1055,6 +1055,7 @@
 
     <div class="tab-content" id="eventresult-tab">
         <div class="event-result">
+             <h2 style="color: #0f2a4e; font-weight: bolder; text-align: center; padding: 10px;">Event Result</h2>
             <div class="accordion-item">
                 <div class="accordion-header">
                     <p>Open Category</p>
@@ -1301,8 +1302,21 @@
                 </div>
             </div>
 
+            <h2 style="color: #0f2a4e; font-weight: bolder; text-align: center; padding: 10px;">Grand Prix Participant List</h2>
+            <table id="gp_performer_swcf" class="display">
+                <thead>
+                    <tr>
+                        <th>Competition Type</th>
+                        <th>Name</th>
+                        <th>From</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+
             <h2 style="color: #0f2a4e; font-weight: bolder; text-align: center; padding: 10px;">Export Result</h2>
-            <p>This features is under maintance. Sorry for inconvenience </p>
             <div class="export">
                 <button id="btn_exp_solo"
                     style="padding: 15px; border: none; border-radius: 10px; background: #1e5296; color: white;"><i
@@ -3761,6 +3775,152 @@
     erOpen();
     erSolo();
     erChoir();
+
+      async function loadData() {
+            const { data, error } = await sb
+                .from("participant")
+                .select(`
+            participant_id,
+            name,
+            city:city_id (
+              city_name,
+              province:province_id (
+                province_name,
+                country:country_id (
+                  country_name
+                )
+              )
+            ),
+            participant_category!inner (
+              parcat_id,
+              competition_id,
+              is_complete,
+              round_type:roundtype_id!inner(
+                roundtype_id,
+                roundtype_name
+              ),
+              category:category_id (
+                category_name,
+                competition_type:comtype_id(comtype_name)
+              ),
+              competition:competition_id(competition_id, competition_fullname)
+            )
+          `)
+                .eq('participant_category.competition_id', 'CP-009')
+                .eq('participant_category.round_type.roundtype_id', 'RT-002');
+
+            if (error) {
+                console.error(error);
+                return;
+            }
+
+            let flattenedData = [];
+
+            data.forEach(row => {
+                if (row.participant_category?.length) {
+                    row.participant_category.forEach(pc => {
+                        flattenedData.push({
+                            ...row,
+                            category_name: pc.category?.category_name ?? "-",
+                            parcat_id: pc.parcat_id,
+                        });
+                    });
+                }
+            });
+
+
+            var isPhone = window.innerWidth < 700;
+            var table = new DataTable('#gp_performer_swcf', {
+                autoWidth: false,
+                ordering: true,
+                paging: false,
+                responsive: true,
+                dom: 'lrtip',
+                scrollX: isPhone,
+                order: [[1, 'asc']],
+                data: flattenedData,
+                columns: [
+                    {
+                        data: "category_name",
+                    },
+                    {
+                        data: "name"
+                    },
+                    {
+                        data: null,
+                        render: function (row) {
+                            const city = row.city;
+
+                            if (!city) return '-';
+
+                            return `${city.city_name}, ${city.province?.province_name ?? '-'
+                                }, ${city.province?.country?.country_name ?? '-'
+                                }`;
+                        }
+
+                    },
+                    {
+                        data: null,
+                        render: function (row) {
+                            if (row.parcat_id === 'PC-0296') {
+                                return 'SWCF 2025 Grand Prix Winner - Choir'
+                            }
+                            else if (row.parcat_id === 'PC-0293') {
+                                return 'SWCF 2025 Grand Prix Winner - Solo'
+                            }
+
+                            else {
+                                return ' '
+                            }
+                        }
+                    }
+                ],
+                columnDefs: [{
+                    targets: 0,
+                    className: 'vertical-align-middle dt-head-center dt-body-left'
+                }, {
+                    targets: 1,
+                    className: 'vertical-align-middle dt-head-center dt-body-left'
+                }, {
+                    targets: 2,
+                    className: 'vertical-align-middle dt-head-center dt-body-left',
+                }],
+            });
+
+            $('#performer_swcf tfoot th').each(function () {
+                var title = $(this).text();
+                if (title != '') {
+                    $(this).html('<input type="text" class="form-control" placeholder="Search ' + title + '" style="width: 100%;" />');
+                }
+                if (title == 'Competition Type') {
+                    $(this).html('<select name = "competition_type" class="form-control" style="width: 100%;"> <option value=""> All </option> <option value="Solo Singing Competition"> Solo Singing Competition</option> <option value="Choir Competition"> Choir Competition </option> <option value="Open Category">Open Category &nbsp; &nbsp; </option></select>');
+                }
+            });
+
+            table.columns().every(function () {
+                var that = this;
+                $('input', this.footer()).off().on('input', function () {
+                    var keyword = this.value;
+                    if (that.search() !== keyword) {
+                        that.search(keyword).draw();
+                    }
+                });
+
+
+                $('select', this.footer()).on('change', function (e) {
+                    e.preventDefault();
+
+                    var keyword = this.value;
+
+                    if (that.search() !== keyword) {
+                        that
+                            .search(keyword)
+                            .draw();
+                    }
+                });
+            });
+        }
+
 
     function adjustMenu() {
         const items = Array.from(nav.querySelectorAll('.tab-btn'));
