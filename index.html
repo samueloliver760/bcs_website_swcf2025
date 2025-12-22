@@ -3776,7 +3776,7 @@
     erSolo();
     erChoir();
 
-      async function loadData() {
+      async function loadGP() {
             const { data, error } = await sb
                 .from("participant")
                 .select(`
@@ -3921,7 +3921,7 @@
             });
         }
 
-
+    loadGP
     function adjustMenu() {
         const items = Array.from(nav.querySelectorAll('.tab-btn'));
         moreMenu.innerHTML = "";
