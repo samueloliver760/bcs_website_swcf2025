@@ -3746,8 +3746,6 @@
         });
     }
 
-    loadData();
-
     function erOpen() {
         loadER('CY-022', '#result_table_es');
         loadER('CY-023', '#result_table_jhs');
@@ -3772,11 +3770,8 @@
         loadER('CY-010', '#result_table_mor');
         loadER('CY-013', '#result_table_vg');
     }
-    erOpen();
-    erSolo();
-    erChoir();
 
-      async function loadGP() {
+    async function loadGP() {
             const { data, error } = await sb
                 .from("participant")
                 .select(`
@@ -3921,6 +3916,10 @@
             });
         }
 
+    loadData();
+    erOpen();
+    erSolo();
+    erChoir();
     loadGP();
     
     function adjustMenu() {
