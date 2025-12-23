@@ -3447,10 +3447,10 @@
                 SUPABASE_ANON_KEY
             );
 
-            async function loadData() {
-                const { data, error } = await sb
-                    .from("participant")
-                    .select(`
+        async function loadData() {
+            const { data, error } = await sb
+                .from("participant")
+                .select(`
                     participant_id,
                     name,
                     city:city_id (
@@ -3477,149 +3477,151 @@
                     competition:competition_id(competition_id, competition_fullname)
                     )
                 `)
-                    .eq('participant_category.competition_id', 'CP-009')
-                    .eq('participant_category.round_type.roundtype_id', 'RT-001');
+                .eq('participant_category.competition_id', 'CP-009')
+                .eq('participant_category.round_type.roundtype_id', 'RT-001');
 
-                if (error) {
-                    console.error(error);
-                    return;
-                }
+            if (error) {
+                console.error(error);
+                return;
+            }
 
-                let flattenedData = [];
+            let flattenedData = [];
 
-                data.forEach(row => {
-                    if (row.participant_category?.length) {
-                        row.participant_category.forEach(pc => {
-                            flattenedData.push({
-                                ...row,
-                                category_name: pc.category?.category_name ?? "-",
-                            });
+            data.forEach(row => {
+                if (row.participant_category?.length) {
+                    row.participant_category.forEach(pc => {
+                        flattenedData.push({
+                            ...row,
+                            category_name: pc.category?.category_name ?? "-",
                         });
+                    });
+                }
+            });
+
+
+            var isPhone = window.innerWidth < 700;
+            var table = new DataTable('#performer_swcf', {
+                autoWidth: false,
+                ordering: true,
+                paging: true,
+                responsive: true,
+                pageLength: 10,
+                dom: 'lrtip',
+                scrollX: isPhone,
+                order: [[2, 'asc']],
+                lengthMenu: [[10, 50, 75, -1], [10, 50, 75, "All"]],
+                data: flattenedData,
+                columns: [
+                    {
+                        data: null,
+                        render: function (row) {
+                            return row?.participant_category?.[0]?.category?.competition_type?.comtype_name ?? "-";
+                        }
+                    },
+                    {
+                        data: "category_name",
+                    },
+                    {
+                        data: "name"
+                    },
+                    {
+                        data: null,
+                        render: function (row) {
+                            const city = row.city;
+
+                            if (!city) return '-';
+
+                            return `${city.city_name}, ${city.province?.province_name ?? '-'
+                                }, ${city.province?.country?.country_name ?? '-'
+                                }`;
+                        }
+
+                    }
+                ],
+                columnDefs: [{
+                    targets: 0,
+                    className: 'vertical-align-middle dt-head-center dt-body-left'
+                }, {
+                    targets: 1,
+                    className: 'vertical-align-middle dt-head-center dt-body-left'
+                }, {
+                    targets: 2,
+                    className: 'vertical-align-middle dt-head-center dt-body-left',
+                }, {
+                    targets: 3,
+                    className: 'vertical-align-middle dt-head-center dt-body-left',
+                }],
+            });
+
+            $('#performer_swcf tfoot th').each(function () {
+                var title = $(this).text();
+                if (title != '') {
+                    $(this).html('<input type="text" class="form-control" placeholder="Search ' + title + '" style="width: 100%;" />');
+                }
+                if (title == 'Category') {
+                    $(this).html('<select name = "category" class="form-control" style="width: 100%;"><option value=""> All </option>');
+                }
+                if (title == 'Competition Type') {
+                    $(this).html('<select name = "competition_type" class="form-control" style="width: 100%;"> <option value=""> All </option> <option value="Solo Singing Competition"> Solo Singing Competition</option> <option value="Choir Competition"> Choir Competition </option> <option value="Open Category">Open Category &nbsp; &nbsp; </option></select>');
+                }
+            });
+
+            table.columns().every(function () {
+                var that = this;
+                $('input', this.footer()).off().on('input', function () {
+                    var keyword = this.value;
+                    if (that.search() !== keyword) {
+                        that.search(keyword).draw();
                     }
                 });
 
 
-                    var isPhone = window.innerWidth < 700;
-                    var table = new DataTable('#performer_swcf', {
-                        autoWidth: false,
-                        ordering: true,
-                        paging: true,
-                        responsive: true,
-                        pageLength: 10,
-                        dom: 'lrtip',
-                        scrollX: isPhone,
-                        order: [[2, 'asc']],
-                        lengthMenu: [[10, 50, 75, -1], [10, 50, 75, "All"]],
-                        data: flattenedData,
-                        columns: [
-                            {
-                                data: null,
-                                render: function (row) {
-                                    return row?.participant_category?.[0]?.category?.competition_type?.comtype_name ?? "-";
-                                }
-                            },
-                            {
-                                data: "category_name",
-                            },
-                            {
-                                data: "name"
-                            },
-                            {
-                                data: null,
-                                render: function (row) {
-                                    const city = row.city;
+                $('select', this.footer()).on('change', function (e) {
+                    e.preventDefault();
 
-                                if (!city) return '-';
-
-                                return `${city.city_name}, ${city.province?.province_name ?? '-'
-                                    }, ${city.province?.country?.country_name ?? '-'
-                                    }`;
-                            }
-
-                        }
-                    ],
-                    columnDefs: [{
-                        targets: 0,
-                        className: 'vertical-align-middle dt-head-center dt-body-left'
-                    }, {
-                        targets: 1,
-                        className: 'vertical-align-middle dt-head-center dt-body-left'
-                    }, {
-                        targets: 2,
-                        className: 'vertical-align-middle dt-head-center dt-body-left',
-                    }, {
-                        targets: 3,
-                        className: 'vertical-align-middle dt-head-center dt-body-left',
-                    }],
-                });
-
-                    $('#performer_swcf tfoot th').each(function () {
-                        var title = $(this).text();
-                        if (title != '') {
-                            $(this).html('<input type="text" class="form-control" placeholder="Search ' + title + '" style="width: 100%;" />');
-                        }
-                        if (title == 'Category') {
-                            $(this).html('<select name = "category" class="form-control" style="width: 100%;"><option value=""> All </option>');
-                        }
-                        if (title == 'Competition Type') {
-                            $(this).html('<select name = "competition_type" class="form-control" style="width: 100%;"> <option value=""> All </option> <option value="Solo Singing Competition"> Solo Singing Competition</option> <option value="Choir Competition"> Choir Competition </option> <option value="Open Category">Open Category &nbsp; &nbsp; </option></select>');
-                        }
-                    });
-
-                table.columns().every(function () {
-                    var that = this;
-                    $('input', this.footer()).off().on('input', function () {
-                        var keyword = this.value;
-                        if (that.search() !== keyword) {
-                            that.search(keyword).draw();
-                        }
-                    });
-
-
-                    $('select', this.footer()).on('change', function (e) {
-                        e.preventDefault();
-
-                        var keyword = this.value;
-
-                        if (that.search() !== keyword) {
-                            that
-                                .search(keyword)
-                                .draw();
-                        }
-                    });
-                });
-
-                $('select[name="competition_type"]').on('change', function () {
-                    var compType = $(this).val();
-                    var categorySelect = $('select[name="category"]');
-
-                    categorySelect.empty();
-                    categorySelect.append('<option value=""> All </option>');
-
-                    var filteredCategories = [
-                        ...new Set(
-                            flattenedData
-                                .filter(row =>
-                                    row?.participant_category?.[0]?.category?.competition_type?.comtype_name === compType
-                                )
-                                .map(row => row.category_name)
-                        )
-                    ];
-
-                    filteredCategories.forEach(function (cat) {
-                        categorySelect.append('<option value="' + cat + '">' + cat + '</option>');
-                    });
-
-                    table.column(0).search(compType).draw();
-                });
-
-
-                $('select[name="category"]').on('change', function () {
                     var keyword = this.value;
-                    table.column(1).search(keyword).draw();
+
+                    if (that.search() !== keyword) {
+                        that
+                            .search(keyword)
+                            .draw();
+                    }
+                });
+            });
+
+            $('select[name="competition_type"]').on('change', function () {
+                var compType = $(this).val();
+                var categorySelect = $('select[name="category"]');
+
+                categorySelect.empty();
+                categorySelect.append('<option value=""> All </option>');
+
+                var filteredCategories = [
+                    ...new Set(
+                        flattenedData
+                            .filter(row =>
+                                row?.participant_category?.[0]?.category?.competition_type?.comtype_name === compType
+                            )
+                            .map(row => row.category_name)
+                    )
+                ];
+
+                filteredCategories.forEach(function (cat) {
+                    categorySelect.append('<option value="' + cat + '">' + cat + '</option>');
                 });
 
-            }
+                table.column(0).search(compType).draw();
+            });
+
+
+            $('select[name="category"]').on('change', function () {
+                var keyword = this.value;
+                table.column(1).search(keyword).draw();
+            });
+
+        }
+
+        loadData(); 
 
             async function loadER(category, table_id) {
                 const { data, error } = await sb
@@ -3915,7 +3917,6 @@
                     });
                 }
 
-            loadData();
             erOpen();
             erSolo();
             erChoir();
